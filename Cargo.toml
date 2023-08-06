@@ -1,0 +1,16 @@
+[package]
+name = "ws_common"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rand = "0.8"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1" }
+semver = { version = "1", features = ["serde"] }
+base64 = "0.21"
+http = "0.2.9"
+hyper = { version = "0.14", features = ["full"] }
+ed25519-dalek = { version = "2.0.0-pre.0", features = ["serde", "rand_core"] }
+strum = { version = "0.25.0", features = ["derive"] }
+url = { version = "2", features = ["serde"] }
