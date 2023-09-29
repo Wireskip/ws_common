@@ -7,3 +7,7 @@ pub fn utime(t: SystemTime) -> i64 {
         .try_into()
         .unwrap()
 }
+
+pub fn utimenow() -> i64 {
+    utime(SystemTime::now())
+}
