@@ -6,30 +6,25 @@ use ed25519_dalek::SigningKey;
 use log::*;
 use rand::rngs::OsRng;
 use serde::{Deserialize, Serialize};
-use std::{env, fs};
+use std::{env, error::Error, fs};
 
-#[derive(Debug)]
-pub struct E {
-    pub exit_code: u8,
-    pub desc: &'static str,
-}
-
-pub fn common_setup<'de, T>(_phantom: ConfigType<T>) -> Result<Config<T>, E>
+pub fn common_setup<'de, T>(
+    _phantom: ConfigType<T>,
+) -> Result<Result<Config<T>, ()>, Box<dyn Error>>
 where
     T: Serialize + Deserialize<'de> + Default,
 {
     env_logger::init();
 
-    let mut p = env::current_exe().unwrap();
+    let mut p = env::current_exe()?;
     p.pop();
 
     let main = p.join("config.json5");
     if !main.exists() {
         fs::write(
             main,
-            serde_json::to_string::<Config<T>>(&Config::default()).unwrap(),
-        )
-        .expect("Unable to write config file");
+            serde_json::to_string::<Config<T>>(&Config::default())?,
+        )?
     }
 
     let local = p.join("config.local.json5");
@@ -44,38 +39,30 @@ where
 
         fs::write(
             p.join("key.pub"),
-            serde_json::to_string(&Base64(kp.verifying_key())).unwrap(),
-        )
-        .expect("Unable to write pubkey compat file");
+            serde_json::to_string(&Base64(kp.verifying_key()))?,
+        )?;
         fs::write(
             local,
             serde_json::to_string(&K {
                 keypair: &Base64(kp),
-            })
-            .unwrap(),
-        )
-        .expect("Unable to write local config file");
+            })?,
+        )?
     }
 
     let args: Vec<String> = env::args().collect();
     if args.len() > 1 && args[1] == "init" {
         // our job here is done
-        return Err(E {
-            exit_code: 0,
-            desc: "init done",
-        });
+        return Ok(Err(()));
     }
 
     let mut cfg: Config<T> = config::Config::builder()
         .add_source(config::File::from(p.join("config")))
         .add_source(config::File::from(p.join("config.local")))
         .add_source(config::Environment::with_prefix("WIRESKIP"))
-        .build()
-        .unwrap()
-        .try_deserialize()
-        .unwrap();
+        .build()?
+        .try_deserialize()?;
 
     cfg.root = p;
     info!("Listening on {}", cfg.address);
-    Ok(cfg)
+    Ok(Ok(cfg))
 }
