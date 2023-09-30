@@ -13,7 +13,11 @@ pub struct HttpClient(pub Client<HttpConnector, Body>);
 
 impl HttpClient {
     pub fn new() -> Self {
-        Self(hyper::Client::builder().build(HttpConnector::new()))
+        Self(
+            hyper::Client::builder()
+                .http2_only(true)
+                .build(HttpConnector::new()),
+        )
     }
 }
 
