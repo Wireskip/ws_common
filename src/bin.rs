@@ -8,9 +8,7 @@ use rand::rngs::OsRng;
 use serde::{Deserialize, Serialize};
 use std::{env, error::Error, fs};
 
-pub fn common_setup<'de, T>(
-    _phantom: ConfigType<T>,
-) -> Result<Result<Config<T>, ()>, Box<dyn Error>>
+pub fn common_setup<'de, T>(_phantom: ConfigType<T>) -> Result<Option<Config<T>>, Box<dyn Error>>
 where
     T: Serialize + Deserialize<'de> + Default,
 {
@@ -52,7 +50,7 @@ where
     let args: Vec<String> = env::args().collect();
     if args.len() > 1 && args[1] == "init" {
         // our job here is done
-        return Ok(Err(()));
+        return Ok(None);
     }
 
     let mut cfg: Config<T> = config::Config::builder()
@@ -64,5 +62,5 @@ where
 
     cfg.root = p;
     info!("Listening on {}", cfg.address);
-    Ok(Ok(cfg))
+    Ok(Some(cfg))
 }
